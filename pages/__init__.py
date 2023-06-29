@@ -164,7 +164,7 @@ def connect_to_mongodb():
     """Establishes a connection to MongoDB and returns the handle to `guvi_test` database.
     """
     #client = MongoClient('mongodb://localhost:27017')
-    client = MongoClient(f"mongodb+srv://jayanth:{st.secrets['mongo_db_pswd']}@clusterguvi.rzlbtlw.mongodb.net/")
+    client = MongoClient(f"mongodb+srv://jayanth:{st.secrets['mongo_db_pwd']}@clusterguvi.rzlbtlw.mongodb.net/")
     db = client['guvi_test']
     return db
 
