@@ -4,13 +4,14 @@ from pymongo import MongoClient
 import pymysql
 from datetime import datetime
 import isodate
-#%%
+import streamlit as st
+
 def get_secs(duration_str):
     '''
     Converts the duration from iso format to seconds.
     '''
     return isodate.parse_duration(duration_str).total_seconds()
-#%%
+
 def check_redundancy(channel_name):
     '''
     Checks if a particular channel already exists in the SQL DB.
@@ -18,13 +19,13 @@ def check_redundancy(channel_name):
     '''
     _,cursor = connect_to_sql()
     return cursor.execute(f"SELECT * FROM channels WHERE name = '{channel_name}';")
-#%%
+
 def check_if_sql_is_empty():
     """Checks if SQL DB is empty or not
     """
     conn,cursor = connect_to_sql()
     return cursor.execute("SHOW TABLES;")
-#%%
+
 # Params
 def build_youtube_handle():
     """Establishes a connection with youtube API and returns that conenction handle
@@ -38,8 +39,8 @@ def build_youtube_handle():
         developerKey=api_key
     )
     return youtube
-#%%
-#%%
+
+
 def fetch_channel_details(youtube,channel_id):
     """Get channel details using youtube API
     Keyword arguments:
@@ -65,7 +66,7 @@ def fetch_channel_details(youtube,channel_id):
         'channel_id': channel_id
     }
     return channel_details,playlist_details
-#%%
+
 def fetch_video_ids(youtube,playlist_id):
     """Get all video IDs from the playlist id.
     Keyword arguments:
@@ -92,7 +93,7 @@ def fetch_video_ids(youtube,playlist_id):
             video_ids.append(item['contentDetails']['videoId'])
         next_page_token = response.get('nextPageToken')
     return video_ids
-#%%
+
 def fetch_video_details(youtube,video_id):
     """Get video details of a video
     Keyword arguments:
@@ -116,7 +117,7 @@ def fetch_video_details(youtube,video_id):
             except:
                 video_details[value] = None
     return video_details
-#%%
+
 def fetch_comment_details(youtube,video_id):
     """Get comments associated with a video
     Keyword arguments:
@@ -140,7 +141,7 @@ def fetch_comment_details(youtube,video_id):
     except:
         top_comments = {}
     return top_comments
-#%%
+
 def fetch(channel_id):
     """Fetches all info of a channel using channel ID.
     Keyword arguments:
@@ -157,16 +158,16 @@ def fetch(channel_id):
         main_info[video_id] = fetch_video_details(youtube,video_id)
         main_info[video_id]['comments'] = fetch_comment_details(youtube,video_id)
     return main_info
-#%%
+
 # MongoDB Connection
 def connect_to_mongodb():
     """Establishes a connection to MongoDB and returns the handle to `guvi_test` database.
     """
     #client = MongoClient('mongodb://localhost:27017')
-    client = MongoClient('mongodb+srv://jayanth:jayanth@clusterguvi.rzlbtlw.mongodb.net/')
+    client = MongoClient(f"mongodb+srv://jayanth:{st.secrets['mongo_db_pswd']}@clusterguvi.rzlbtlw.mongodb.net/")
     db = client['guvi_test']
     return db
-#%%
+
 def store_in_mongo_db(collection_details):
     """Stores the collection in MongoDB
     Keyword arguments:
@@ -174,7 +175,7 @@ def store_in_mongo_db(collection_details):
     """
     db = connect_to_mongodb()
     db.youtube.insert_one(collection_details)
-#%%
+
 def fetch_from_mongo_db(channel_name):
     """Gets the collection from MongoDB of specified channel.
     Keyword arguments:
@@ -197,23 +198,23 @@ def fetch_from_mongo_db(channel_name):
             comments[comment_id]['video_id'] = video_id
             comments_db.append(comments[comment_id])
     return channels_db,playlists_db,videos_db,comments_db
-#%%
+
 def fetch_channel_names():
     """Gets the channel names from MongoDB
     """
     db = connect_to_mongodb()
     result = db.youtube.find({},{'_id':0,'channel_name':1})
     return [channel['channel_name'] for channel in result]
-#%%
+
 # SQL Connection
 def connect_to_sql():
     """Establishes a connection to SQL DB
     """
     #conn = pymysql.connect(host='localhost',user='root',password='root',db='guvi_projects_prac')
-    conn = pymysql.connect(user="sql12629335",password="4Lp6FKKpTF",host = "sql12.freesqldatabase.com",port=3306, database = "sql12629335")
+    conn = pymysql.connect(user="sql12629335",password=st.secrets['sql_pwd'],host = "sql12.freesqldatabase.com",port=3306, database = "sql12629335")
     cursor = conn.cursor()
     return conn,cursor
-#%%
+
 def migrate_channels_db(channels_db):
     """Store channel details in SQL DB
     Keyword arguments:
@@ -232,7 +233,7 @@ def migrate_channels_db(channels_db):
     cursor.execute(sql,vals)
     conn.commit()
     conn.close()
-#%%
+
 def migrate_playlist_db(channels_db):
     """Store playlist details in SQL DB
     Keyword arguments:
@@ -247,7 +248,7 @@ def migrate_playlist_db(channels_db):
     cursor.execute(sql,vals)
     conn.commit()
     conn.close()
-#%%
+
 def migrate_videos_db(videos_db):
     """Store videos details in SQL DB
     Keyword arguments:
@@ -265,7 +266,7 @@ def migrate_videos_db(videos_db):
         cursor.execute(sql,vals)
         conn.commit()
     conn.close()
-#%%
+
 def migrate_comments_db(comments_db):
     """Store comments details in SQL DB
     Keyword arguments:
@@ -281,7 +282,7 @@ def migrate_comments_db(comments_db):
         cursor.execute(sql,vals)
         conn.commit()
     conn.close()
-#%%
+
 queries = {
     'What are the names of all the videos and their corresponding channels?': 0,
     'Which channels have the most number of videos, and how many videos do they have?': 1,
@@ -294,7 +295,7 @@ queries = {
     'What is the average duration of all videos in each channel, and what are their corresponding channel names?': 8,
     'Which videos have the highest number of comments, and what are their corresponding channel names?': 9
     }
-#%%
+
 def apply_query(query):
     """Applies a query on the SQL DB.
     Keyword arguments:
