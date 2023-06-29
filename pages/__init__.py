@@ -164,7 +164,7 @@ def connect_to_mongodb():
     """Establishes a connection to MongoDB and returns the handle to `guvi_test` database.
     """
     #client = MongoClient('mongodb://localhost:27017')
-    client = MongoClient(f"mongodb+srv://jayanth:{st.secrets['mongo_db_pwd']}@clusterguvi.rzlbtlw.mongodb.net/")
+    client = MongoClient(f'mongodb+srv://jayanth:{st.secrets["mongo_db_pwd"]}@clusterguvi.rzlbtlw.mongodb.net/')
     db = client['guvi_test']
     return db
 
@@ -211,7 +211,7 @@ def connect_to_sql():
     """Establishes a connection to SQL DB
     """
     #conn = pymysql.connect(host='localhost',user='root',password='root',db='guvi_projects_prac')
-    conn = pymysql.connect(user="sql12629335",password=st.secrets['sql_pwd'],host = "sql12.freesqldatabase.com",port=3306, database = "sql12629335")
+    conn = pymysql.connect(user="sql12629335",password=st.secrets["sql_pwd"],host = "sql12.freesqldatabase.com",port=3306, database = "sql12629335")
     cursor = conn.cursor()
     return conn,cursor
 
